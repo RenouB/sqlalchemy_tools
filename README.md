@@ -1,0 +1,1 @@
+just a little package to facilitate connection to sql databases using SQLalchemy.
