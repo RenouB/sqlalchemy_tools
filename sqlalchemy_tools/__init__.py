@@ -4,7 +4,7 @@ import pathlib
 import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 
 
 def get_sqlalchemy_url(prefix):
@@ -18,7 +18,7 @@ def get_sqlalchemy_url(prefix):
     sqlalchemy_url = DB_TYPE+"://"+DB_USERNAME+":"+DB_PASS+"@"+DB_HOST+":"+DB_PORT+"/"+DB_NAME
     return sqlalchemy_url
 
-def get_sqlalchemy_session(env_file=".env", prefix="TEST"):
+def get_sqlalchemy_scoped_session(env_file=".env", prefix="TEST"):
     '''
     connect to database and create sqlalchemy session.
     env_file: path to env file where database URL and credentials are stored
@@ -28,8 +28,10 @@ def get_sqlalchemy_session(env_file=".env", prefix="TEST"):
     sqlalchemy_url = get_sqlalchemy_url(prefix)
     engine = create_engine(sqlalchemy_url)
     engine.connect()
-    Session = sessionmaker(engine)
+    session_factory = sessionmaker(engine)
+    Session = scoped_session(session_factory)
     return Session()
+
 
 def get_base(env_file=".env", prefix="TEST"):
     """ get model base, so that the model mappings of the orm can be used in other"""
@@ -40,10 +42,16 @@ def get_base(env_file=".env", prefix="TEST"):
     Base.prepare(engine, reflect=True)
     return Base
     
+def empty_tables(env_file=".env"):
+    base = get_base(env_file)
+    for Table in base.classes:
+        session.query(Table).delete()
+    session.commit()
+    return 
 
 if __name__ == "__main__":
-    session = get_sqlalchemy_session()
+    session = get_sqlalchemy_scoped_session()
     base = get_base()
     print(session)
-    print(base)
+    print(base.classes)
     
