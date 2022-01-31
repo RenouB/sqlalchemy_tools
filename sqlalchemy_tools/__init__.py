@@ -7,7 +7,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 
-def get_sqlalchemy_url(prefix):
+def get_sqlalchemy_url(prefix, env_file=None):
+    if env_file:
+        load_dotenv(env_file)
     """ build database url from env file """
     DB_TYPE = os.environ.get(prefix+'_DB_TYPE')
     DB_USERNAME = os.environ.get(prefix+'_DB_USERNAME')
@@ -42,8 +44,9 @@ def get_base(env_file=".env", prefix="TEST"):
     Base.prepare(engine, reflect=True)
     return Base
     
-def empty_tables(env_file=".env"):
-    base = get_base(env_file)
+def empty_tables(env_file=".env", prefix="TEST"):
+    base = get_base(env_file, prefix)
+    session = get_sqlalchemy_scoped_session(env_file, prefix)
     for Table in base.classes:
         session.query(Table).delete()
     session.commit()
